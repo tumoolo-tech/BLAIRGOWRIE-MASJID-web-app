@@ -17,6 +17,8 @@
 .sectionText { color: var(--muted); line-height: 1.9; margin-bottom: 1rem; font-size: 1.15rem; }
 .bulletList { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
 .bulletList li { display: flex; align-items: center; gap: 0.75rem; color: var(--muted); font-size: 1.15rem; }
+.bulletList li > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.bulletList dd { overflow-wrap: anywhere; }
 .bullet { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 .highlightSection { background: var(--card-bg); backdrop-filter: blur(14px) saturate(130%); -webkit-backdrop-filter: blur(14px) saturate(130%); padding: 2rem; border-radius: var(--card-radius); border-left: 2px solid var(--accent); border: var(--hairline) solid var(--card-border); }
 .purposeGrid { display: grid; grid-template-columns: 1fr; gap: 1rem; }

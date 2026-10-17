@@ -117,11 +117,29 @@
   border-top: var(--hairline) solid var(--card-border);
 }
 
+.legal {
+  font-size: 0.7rem;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.legal a {
+  color: inherit;
+}
+
+/* full-strength muted colour: at 50% opacity it failed WCAG AA contrast */
 .copyright {
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   color: var(--muted);
-  opacity: 0.5;
+}
+
+.policyLink {
+  margin-left: 1rem;
+  color: var(--muted);
+  text-decoration: underline;
 }
 
 @media (min-width: 768px) {
