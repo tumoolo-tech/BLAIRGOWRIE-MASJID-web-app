@@ -4,6 +4,7 @@ import Link from 'next/link';
 export const metadata = {
   title: 'About',
   description: 'Learn about the Blairgowrie Muslim Association, our journey to purchase a permanent masjid, and our vision for the community.',
+  alternates: { canonical: '/about' },
 };
 
 export default function AboutPage() {
@@ -14,6 +15,9 @@ export default function AboutPage() {
         <div className={styles.heroBg}>
           <img
             src="/pictures/placeview1.webp"
+            srcSet="/pictures/placeview1-960.webp 960w, /pictures/placeview1.webp 1181w"
+            sizes="100vw"
+            fetchPriority="high"
             alt="Masjid Exterior"
             className={styles.heroImg}
           />
@@ -39,7 +43,7 @@ export default function AboutPage() {
           </div>
           <div className={styles.journeyCta}>
             <div className={styles.ctaCard}>
-              <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', color: 'var(--accent)' }}>account_balance_wallet</span>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '2.5rem', color: 'var(--accent)' }}>account_balance_wallet</span>
               <h3 className={styles.ctaTitle}>Support Our Foundation</h3>
               <p className={styles.ctaDesc}>Your contributions help secure our permanent home in Blairgowrie.</p>
               <Link href="/donate" className={styles.ctaBtn}>CONTRIBUTE TO PURCHASE</Link>
@@ -51,7 +55,7 @@ export default function AboutPage() {
       {/* Vision Section */}
       <section className={styles.vision}>
         <div className={styles.visionCenter}>
-          <span className="material-symbols-outlined" style={{ fontSize: '3rem', color: 'var(--accent)' }}>visibility</span>
+          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '3rem', color: 'var(--accent)' }}>visibility</span>
           <h2 className={styles.visionTitle}>Our Vision</h2>
           <p className={styles.visionQuote}>
             &ldquo;To serve the community with excellence, fostering a space where spiritual devotion meets community service in the heart of Blairgowrie.&rdquo;
@@ -65,7 +69,7 @@ export default function AboutPage() {
           ].map((item, i) => (
             <div key={i} className={styles.pillarCard}>
               <h4 className={styles.pillarTitle}>
-                <span className="material-symbols-outlined" style={{ marginRight: '0.5rem' }}>{item.icon}</span>
+                <span className="material-symbols-outlined" aria-hidden="true" style={{ marginRight: '0.5rem' }}>{item.icon}</span>
                 {item.title}
               </h4>
               <p className={styles.pillarDesc}>{item.desc}</p>
@@ -79,7 +83,7 @@ export default function AboutPage() {
         <div className={styles.historyGrid}>
           <div className={styles.historyHero}>
             <div className={styles.historyGhost}>
-              <span className="material-symbols-outlined" style={{ fontSize: '8rem', opacity: 0.1 }}>history</span>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '8rem', opacity: 0.1 }}>history</span>
             </div>
             <h2 className={styles.historyTitle}>History Section</h2>
             <p className={styles.historyDesc}>Tracing the roots of the Blairgowrie Muslim Association (BMA) and our vision for the future.</p>

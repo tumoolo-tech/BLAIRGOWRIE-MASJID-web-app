@@ -1,7 +1,11 @@
 import styles from './page.module.css';
 import Link from 'next/link';
 
-export const metadata = { title: 'Prospectus', description: 'Explore the Blairgowrie Masjid prospectus — our visionary roadmap for faith, education, and community unity.' };
+export const metadata = {
+  title: 'Prospectus',
+  description: 'Explore the Blairgowrie Masjid prospectus — our visionary roadmap for faith, education, and community unity.',
+  alternates: { canonical: '/prospectus' },
+};
 
 export default function ProspectusPage() {
   return (
@@ -37,7 +41,7 @@ export default function ProspectusPage() {
               { icon: 'eco', title: 'Sustainable Design', desc: 'Implementing green energy solutions and water conservation systems to ensure our masjid serves as a steward of the earth.' },
             ].map((c, i) => (
               <div key={i} className={styles.initiativeCard}>
-                <span className="material-symbols-outlined" style={{ fontSize: '1.75rem', color: 'var(--secondary)' }}>{c.icon}</span>
+                <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '1.75rem', color: 'var(--secondary)' }}>{c.icon}</span>
                 <div>
                   <h3 className={styles.initiativeTitle}>{c.title}</h3>
                   <p className={styles.initiativeDesc}>{c.desc}</p>
@@ -51,13 +55,13 @@ export default function ProspectusPage() {
       {/* Download CTA */}
       <section className={styles.download}>
         <div className={styles.downloadIcon}>
-          <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', fontVariationSettings: "'FILL' 1" }}>picture_as_pdf</span>
+          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '2.5rem', fontVariationSettings: "'FILL' 1" }}>picture_as_pdf</span>
         </div>
         <h2 className={styles.downloadTitle}>Explore the Complete Vision</h2>
         <p className={styles.downloadDesc}>Our comprehensive prospectus provides in-depth details on architectural plans, financial projections, governance structures, and the five-year community roadmap.</p>
         <div className={styles.downloadBtns}>
           <button className="btn-filled" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            Download our full Prospectus PDF <span className="material-symbols-outlined">download</span>
+            Download our full Prospectus PDF <span className="material-symbols-outlined" aria-hidden="true">download</span>
           </button>
           <Link href="/contact" className={styles.printLink}>Request a Printed Copy</Link>
         </div>
@@ -69,14 +73,14 @@ export default function ProspectusPage() {
           <h3 className={styles.archTitle}>The Blueprint of Serenity</h3>
           <div className={styles.archFlow}>
             <div className={styles.archImg}>
-              <img src="/pictures/prospectus.webp" alt="Masjid Concept" />
+              <img src="/pictures/prospectus.webp" alt="Masjid Concept" loading="lazy" decoding="async" />
             </div>
             <p className={styles.archDesc}>The architectural language of Blairgowrie Masjid balances classic proportions with contemporary clarity. Utilizing local materials and maximizing natural light, the design ensures that every visitor experiences an immediate sense of detachment from worldly noise upon entry.</p>
           </div>
           <ul className={styles.archList}>
-            <li><span className="material-symbols-outlined" style={{ color: 'var(--secondary)' }}>check_circle</span> 800+ Musalli Capacity</li>
-            <li><span className="material-symbols-outlined" style={{ color: 'var(--secondary)' }}>check_circle</span> Dedicated Women&apos;s Prayer &amp; Learning Center</li>
-            <li><span className="material-symbols-outlined" style={{ color: 'var(--secondary)' }}>check_circle</span> Multi-purpose Community Hall</li>
+            <li><span className="material-symbols-outlined" aria-hidden="true" style={{ color: 'var(--secondary)' }}>check_circle</span> 800+ Musalli Capacity</li>
+            <li><span className="material-symbols-outlined" aria-hidden="true" style={{ color: 'var(--secondary)' }}>check_circle</span> Dedicated Women&apos;s Prayer &amp; Learning Center</li>
+            <li><span className="material-symbols-outlined" aria-hidden="true" style={{ color: 'var(--secondary)' }}>check_circle</span> Multi-purpose Community Hall</li>
           </ul>
         </div>
       </section>
@@ -93,7 +97,7 @@ export default function ProspectusPage() {
             { src: '/pictures/design2.webp', ratio: '3/2', alt: 'Design 2' }
           ].map((img, i) => (
             <div key={i} className={styles.wrap} style={{ '--img': `url(${img.src})` }}>
-              <img src={img.src} style={{ '--img-r': img.ratio }} alt={img.alt} />
+              <img src={img.src} style={{ '--img-r': img.ratio }} alt={img.alt} loading="lazy" decoding="async" />
             </div>
           ))}
         </div>
