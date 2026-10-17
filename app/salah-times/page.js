@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import styles from './page.module.css';
-import { supabase } from '../lib/supabase';
+import { selectRows } from '../lib/publicData';
+import LazyIframe from '../components/LazyIframe';
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -61,7 +62,9 @@ function ChangeCell({ change, styles }) {
 
 export default function SalahTimesPage() {
   const [times, setTimes] = useState(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  // null until mounted: the page is prerendered at build time, so rendering a clock
+  // during SSR would never match the visitor's time (React hydration error #418).
+  const [currentTime, setCurrentTime] = useState(null);
   const [nextPrayer, setNextPrayer] = useState({ name: 'Loading...', time: '' });
   const [salahChanges, setSalahChanges] = useState([]);
 
@@ -89,6 +92,7 @@ export default function SalahTimesPage() {
     }
     fetchTimes();
 
+    setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 30000);
     return () => clearInterval(timer);
   }, []);
@@ -97,11 +101,11 @@ export default function SalahTimesPage() {
   useEffect(() => {
     async function loadChanges() {
       try {
-        const { data, error } = await supabase
-          .from('salah_changes')
-          .select('id, prayer, new_adhan_time, new_iqamah_time, effective_from, note')
-          .eq('is_active', true)
-          .order('effective_from', { ascending: true });
+        const { data, error } = await selectRows('salah_changes', {
+          select: 'id,prayer,new_adhan_time,new_iqamah_time,effective_from,note',
+          is_active: 'eq.true',
+          order: 'effective_from.asc',
+        });
         if (error) {
           console.warn('[salah-changes] load failed:', error.message);
           return;
@@ -149,7 +153,7 @@ export default function SalahTimesPage() {
 
   // Recompute "next prayer" whenever the effective adhan times change
   useEffect(() => {
-    if (!times) return;
+    if (!times || !currentTime) return;
     const sequence = [
       { key: 'fajr',    apiName: 'Fajr' },
       { key: 'dhuhr',   apiName: 'Dhuhr' },
@@ -193,7 +197,9 @@ export default function SalahTimesPage() {
   const jumuahAdhan = to12h(jumuahOv?.new_adhan_time ? timeDbTo24(jumuahOv.new_adhan_time) : jumuahDefaultAdhan24);
   const jumuahIqamah = to12h(jumuahOv?.new_iqamah_time ? timeDbTo24(jumuahOv.new_iqamah_time) : jumuahDefaultIqamah24);
 
-  const currentTimeStr = currentTime.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const currentTimeStr = currentTime
+    ? currentTime.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: false })
+    : '--:--';
 
   return (
     <div className={styles.page}>
@@ -209,7 +215,7 @@ export default function SalahTimesPage() {
       <section className={styles.mainGrid}>
         <div className={styles.activeCard}>
           <div className={styles.activeGhost}>
-            <span className="material-symbols-outlined" style={{ fontSize: '12rem' }}>schedule</span>
+            <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '12rem' }}>schedule</span>
           </div>
           <div className={styles.activeTop}>
             <p className={styles.activeLabel}>Next Prayer</p>
@@ -227,11 +233,10 @@ export default function SalahTimesPage() {
 
         {/* Times Table — phone shows external Masjid Board, PC shows the local table */}
         <div className={styles.externalBoard}>
-          <iframe
+          <LazyIframe
             src="https://masjidboardlive.com/boards/?id=blairgowrie-ubay-bin-kab"
             title="Masjid Times — Live Board"
             className={styles.externalBoardFrame}
-            loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />
           <a
@@ -297,7 +302,7 @@ export default function SalahTimesPage() {
           </div>
           <div className={styles.infoNotices}>
             <div className={styles.notice}>
-              <span className="material-symbols-outlined" style={{ color: 'var(--secondary)' }}>info</span>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{ color: 'var(--secondary)' }}>info</span>
               <div>
                 <h4 className={styles.noticeTitle}>Weekly Changes</h4>
                 <p className={styles.noticeText}>Prayer times are updated automatically using the Aladhan API based on the sun&apos;s position for Blairgowrie, Randburg.</p>

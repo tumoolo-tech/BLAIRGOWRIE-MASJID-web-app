@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
-import { supabase } from '../lib/supabase';
+import { selectRows } from '../lib/publicData';
 
 // How often the featured card rotates between close-together events
 const ROTATION_MS = 15000;
@@ -40,13 +40,12 @@ export default function EventsPage() {
     let mounted = true;
     async function load() {
       const todayStr = toLocalDateIso(new Date());
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('is_active', true)
-        .gte('event_date', todayStr)
-        .order('event_date', { ascending: true })
-        .order('created_at', { ascending: true });
+      const { data, error } = await selectRows('events', {
+        select: '*',
+        is_active: 'eq.true',
+        event_date: `gte.${todayStr}`,
+        order: 'event_date.asc,created_at.asc',
+      });
       if (!mounted) return;
       if (error) console.error('[events] load failed:', error.message);
       setEvents(data || []);
@@ -111,7 +110,14 @@ export default function EventsPage() {
       {/* Hero */}
       <header className={styles.hero}>
         <div className={styles.heroBg}>
-          <img src="/pictures/mosque-interior.webp" alt="Events" className={styles.heroImg} />
+          <img
+            src="/pictures/mosque-interior.webp"
+            srcSet="/pictures/mosque-interior-960.webp 960w, /pictures/mosque-interior.webp 1600w"
+            sizes="100vw"
+            fetchPriority="high"
+            alt="Events"
+            className={styles.heroImg}
+          />
           <div className={styles.heroOverlay} />
         </div>
         <div className={styles.heroContent}>
@@ -128,7 +134,11 @@ export default function EventsPage() {
           </div>
 
           {loading ? (
-            <p style={{ color: 'var(--muted)' }}>Loading events…</p>
+            // Same box as the empty state, so the sidebar below doesn't jump when data arrives (CLS).
+            <div aria-busy="true" style={{ position: 'relative' }}>
+              <div style={{ visibility: 'hidden' }} aria-hidden="true"><EmptyEvents /></div>
+              <p style={{ color: 'var(--muted)', position: 'absolute', top: '2rem', left: '2rem' }}>Loading events…</p>
+            </div>
           ) : !featured ? (
             <EmptyEvents />
           ) : (
@@ -138,12 +148,14 @@ export default function EventsPage() {
                 <div className={styles.featuredImg}>
                   <img
                     src={featured.image_url || '/pictures/ramadan-eid-history.webp'}
+                    loading="lazy"
+                    decoding="async"
                     alt={featured.title}
                   />
                 </div>
                 <div className={styles.featuredContent}>
                   <div className={styles.eventMeta}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '0.875rem' }}>calendar_today</span>
+                    <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '0.875rem' }}>calendar_today</span>
                     <span>{formatLongDate(featured.event_date)}{featured.event_time ? ` · ${featured.event_time}` : ''}</span>
                   </div>
                   <h3 className={styles.featuredTitle}>{featured.title}</h3>
@@ -151,7 +163,7 @@ export default function EventsPage() {
                   <div className={styles.featuredActions}>
                     {featured.location && (
                       <span className={styles.eventLocation}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>location_on</span>
+                        <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '1rem' }}>location_on</span>
                         {featured.location.toUpperCase()}
                       </span>
                     )}
@@ -248,7 +260,7 @@ export default function EventsPage() {
         <aside className={styles.sidebar}>
           <div className={styles.calendarCard}>
             <h3 className={styles.calendarTitle}>
-              <span className="material-symbols-outlined" style={{ marginRight: '0.5rem' }}>event</span> Quick Calendar
+              <span className="material-symbols-outlined" aria-hidden="true" style={{ marginRight: '0.5rem' }}>event</span> Quick Calendar
             </h3>
             <div className={styles.calendarList}>
               {calendarEvents.length === 0 ? (
@@ -272,7 +284,7 @@ export default function EventsPage() {
 
           <div className={styles.hostCard}>
             <div className={styles.hostGhost}>
-              <span className="material-symbols-outlined" style={{ fontSize: '6rem', opacity: 0.1 }}>volunteer_activism</span>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '6rem', opacity: 0.1 }}>volunteer_activism</span>
             </div>
             <h3 className={styles.hostTitle}>Want to Host an Event?</h3>
             <p className={styles.hostDesc}>The Masjid is a space for everyone. If you have an idea for a community program or workshop, we&apos;d love to hear it.</p>
@@ -289,7 +301,7 @@ function EmptyEvents() {
     <div className={styles.featuredEvent} style={{ padding: '2rem' }}>
       <div className={styles.featuredContent}>
         <div className={styles.eventMeta}>
-          <span className="material-symbols-outlined" style={{ fontSize: '0.875rem' }}>info</span>
+          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '0.875rem' }}>info</span>
           <span>Check back soon</span>
         </div>
         <h3 className={styles.featuredTitle}>No upcoming events posted yet</h3>

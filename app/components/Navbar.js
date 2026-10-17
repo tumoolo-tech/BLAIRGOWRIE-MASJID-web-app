@@ -26,21 +26,27 @@ export default function Navbar() {
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    if (!menuOpen) return () => { document.body.style.overflow = ''; };
+    const onKey = (e) => { if (e.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
   }, [menuOpen]);
 
   return (
     <>
       <nav className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
         <div className={styles.inner}>
-          <Link href="/" className={styles.logo}>
+          <Link prefetch={false} href="/" className={styles.logo}>
             <img src="/pictures/logo.webp" alt="" className={styles.logoImg} />
             <span className={styles.logoText}>BLAIRGOWRIE MASJID</span>
           </Link>
 
           <div className={styles.desktopLinks}>
             {links.map(l => (
-              <Link key={l.href} href={l.href}
+              <Link prefetch={false} key={l.href} href={l.href}
                 className={`${styles.navLink} ${pathname === l.href ? styles.active : ''}`}>
                 {l.label}
               </Link>
@@ -48,11 +54,12 @@ export default function Navbar() {
           </div>
 
           <div className={styles.actions}>
-            <Link href="/donate" className={styles.donateBtn}>DONATE</Link>
+            <Link prefetch={false} href="/donate" className={styles.donateBtn}>DONATE</Link>
             <ThemeToggle />
-            <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
+            <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen} aria-controls="mobile-menu">
               <span className={styles.menuLabel}>MENU</span>
-              <span className="material-symbols-outlined">{menuOpen ? 'close' : 'menu'}</span>
+              <span className="material-symbols-outlined" aria-hidden="true">{menuOpen ? 'close' : 'menu'}</span>
             </button>
           </div>
         </div>
@@ -63,18 +70,18 @@ export default function Navbar() {
         onClick={() => setMenuOpen(false)} />
 
       {/* Mobile menu */}
-      <div className={`${styles.mobileMenu} ${menuOpen ? styles.mobileOpen : ''}`}>
+      <div id="mobile-menu" className={`${styles.mobileMenu} ${menuOpen ? styles.mobileOpen : ''}`}>
         <div className={styles.mobileMenuInner}>
           {links.map(l => (
-            <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)}
+            <Link prefetch={false} key={l.href} href={l.href} onClick={() => setMenuOpen(false)}
               className={`${styles.mobileLink} ${pathname === l.href ? styles.active : ''}`}>
               {l.label}
             </Link>
           ))}
-          <Link href="/donate" className={styles.mobileDonate} onClick={() => setMenuOpen(false)}>
+          <Link prefetch={false} href="/donate" className={styles.mobileDonate} onClick={() => setMenuOpen(false)}>
             DONATE
           </Link>
-          <Link href="/contact" className={styles.mobileContact} onClick={() => setMenuOpen(false)}>
+          <Link prefetch={false} href="/contact" className={styles.mobileContact} onClick={() => setMenuOpen(false)}>
             CONTACT US
           </Link>
         </div>
