@@ -129,6 +129,10 @@
     --board-height: 36rem;
     height: var(--board-height);
     overflow: hidden;
+    /* Chromium can paint a scaled iframe's layer outside an overflow:hidden box while
+       scrolling (black bar above/below the card); clip its paint hard. */
+    contain: paint;
+    clip-path: inset(0);
 }
 
 .externalBoardFrame {
@@ -361,13 +365,28 @@
 }
 
 @media (min-width: 1024px) {
+    /* Desktop: the board card is exactly as wide as the board (no black bands) and its
+       height is the board down to "Next Salah Change" (~1450px at a 700px layout),
+       scaled so both cards fit the screen under the nav. The zoom steps with the
+       window height because CSS can't divide one length by another. */
     .mainGrid {
-        grid-template-columns: 4fr 8fr;
+        grid-template-columns: minmax(0, 30rem) auto;
+        justify-content: center;
+        align-items: stretch;
+    }
+
+    .externalBoard {
+        width: auto;
     }
 
     .externalBoardViewport {
-        --board-zoom: 0.5;
-        --board-height: 46rem;
+        --board-zoom: 0.42;
+        width: calc(700px * var(--board-zoom));
+        --board-height: calc(1450px * var(--board-zoom));
+    }
+
+    .externalBoardFrame {
+        width: 700px;
     }
 
     .infoGrid {
@@ -576,4 +595,20 @@
     .changeVal { font-size: 0.9rem; }
     .changeKind { font-size: 0.58rem; min-width: 2.2rem; }
     .changeFrom { font-size: 0.58rem; }
+}
+/* Board zoom by window height (desktop layout only): card + link + nav must fit. */
+@media (min-width: 1024px) and (max-height: 759px) {
+    .externalBoardViewport { --board-zoom: 0.38; }
+}
+@media (min-width: 1024px) and (min-height: 820px) {
+    .externalBoardViewport { --board-zoom: 0.46; }
+}
+@media (min-width: 1024px) and (min-height: 900px) {
+    .externalBoardViewport { --board-zoom: 0.52; }
+}
+@media (min-width: 1024px) and (min-height: 1000px) {
+    .externalBoardViewport { --board-zoom: 0.58; }
+}
+@media (min-width: 1024px) and (min-height: 1100px) {
+    .externalBoardViewport { --board-zoom: 0.64; }
 }
