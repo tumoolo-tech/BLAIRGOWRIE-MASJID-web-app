@@ -6,8 +6,38 @@ export default function WebGLBackground() {
   const rafId = useRef(null);
 
   useEffect(() => {
+    // Compiling the shader and drawing its first frame is a 0.5–1s main-thread task on a
+    // mid-range phone. Starting it at idle still landed inside page load, so it waits for
+    // the visitor's first interaction (the scene is scroll-driven anyway), then for an
+    // idle moment so it never delays the input that triggered it. Until then the page
+    // shows its plain background colour.
+    const EVENTS = ['pointermove', 'pointerdown', 'touchstart', 'keydown', 'wheel', 'scroll'];
+    let cleanup = null;
+    let cancelled = false;
+    let idleId = null;
+    const start = () => { if (!cancelled) cleanup = init(); };
+    const onFirstInteraction = () => {
+      EVENTS.forEach((e) => window.removeEventListener(e, onFirstInteraction));
+      idleId = 'requestIdleCallback' in window
+        ? window.requestIdleCallback(start, { timeout: 500 })
+        : window.setTimeout(start, 100);
+    };
+    EVENTS.forEach((e) => window.addEventListener(e, onFirstInteraction, { passive: true }));
+    return () => {
+      cancelled = true;
+      EVENTS.forEach((e) => window.removeEventListener(e, onFirstInteraction));
+      if (idleId !== null) {
+        if ('cancelIdleCallback' in window) window.cancelIdleCallback(idleId);
+        else window.clearTimeout(idleId);
+      }
+      cleanup?.();
+    };
+  }, []);
+
+  function init() {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const gl = canvas.getContext('webgl', {
       alpha: false, antialias: false, depth: false,
@@ -206,18 +236,6 @@ col=mix(col,skyCol,skyMix);float hEdge=smoothstep(-.008,.018,rd.y);col=mix(fogCo
       }
     };
 
-    /* ── reveal observer ── */
-    const revealEls = [...document.querySelectorAll('.tag, h1, h2, h3, .body-text, .stat-row, .cta, .h-line')];
-    for (const el of revealEls) {
-      if (el.getBoundingClientRect().top < window.innerHeight * 0.92) el.classList.add('visible');
-    }
-    const io = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) { entry.target.classList.add('visible'); io.unobserve(entry.target); }
-      }
-    }, { threshold: 0.1, rootMargin: '0px 0px -6% 0px' });
-    for (const el of revealEls) io.observe(el);
-
     /* ── performance adapt ── */
     const t0 = performance.now();
     let lastNow = t0;
@@ -275,16 +293,26 @@ col=mix(col,skyCol,skyMix);float hEdge=smoothstep(-.008,.018,rd.y);col=mix(fogCo
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
 
-    rafId.current = requestAnimationFrame(frame);
+    if (reducedMotion) {
+      // One still frame at the top-of-page scene; no animation loop.
+      gl.uniform1f(uTi, 0);
+      gl.uniform1f(uScroll, 0);
+      gl.uniform1f(uScene, 0);
+      gl.uniform1f(uBlend, 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    } else {
+      rafId.current = requestAnimationFrame(frame);
+    }
 
     return () => {
       if (rafId.current) cancelAnimationFrame(rafId.current);
       window.removeEventListener('resize', resize);
+      if (window.visualViewport) window.visualViewport.removeEventListener('resize', resize);
       window.removeEventListener('scroll', updateScrollMetrics);
+      window.removeEventListener('load', updateScrollMetrics);
       observer.disconnect();
-      io.disconnect();
     };
-  }, []);
+  }
 
   return (
     <>

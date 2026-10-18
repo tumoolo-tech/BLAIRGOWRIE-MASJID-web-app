@@ -1,9 +1,36 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import styles from './page.module.css';
+import LazyIframe from '../components/LazyIframe';
+
+// Time-trap: a person takes longer than this to fill the form; bots usually don't.
+const MIN_FILL_MS = 3000;
 
 export default function ContactPage() {
-  const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const [nextUrl, setNextUrl] = useState('/contact/sent');
+  const openedAt = useRef(0);
+
+  useEffect(() => {
+    openedAt.current = Date.now();
+    setNextUrl(`${window.location.origin}/contact/sent`);
+    // Coming back with the browser's Back button restores this page from cache: re-enable the form.
+    const onShow = (e) => { if (e.persisted) setSending(false); };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, []);
+
+  function onSubmit(e) {
+    if (Date.now() - openedAt.current < MIN_FILL_MS) {
+      e.preventDefault();
+      setError('That was quick! Please check your message and press send again.');
+      return;
+    }
+    setError('');
+    setSending(true);
+  }
 
   return (
     <div className={styles.page}>
@@ -24,14 +51,13 @@ export default function ContactPage() {
                 <h2 className={styles.mapTitle}>Our Future Home</h2>
                 <p className={styles.mapDesc}>Blairgowrie Masjid intends to be located at <strong>70 Conrad Drive, Blairgowrie, Randburg.</strong></p>
                 <div className={styles.mapWrapper}>
-                  <iframe
+                  <LazyIframe
                     src="https://maps.google.com/maps?q=70+Conrad+Drive+Blairgowrie+South+Africa&z=16&output=embed&hl=en"
                     width="100%"
                     height="100%"
                     style={{ border: 0, display: 'block' }}
                     allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
+                          referrerPolicy="no-referrer-when-downgrade"
                     title="Blairgowrie Masjid Location"
                   />
                   <a
@@ -40,13 +66,13 @@ export default function ContactPage() {
                     rel="noopener noreferrer"
                     className={styles.mapPin}
                   >
-                    <span className="material-symbols-outlined">location_on</span>
+                    <span className="material-symbols-outlined" aria-hidden="true">location_on</span>
                     <span>View on Google Maps</span>
                   </a>
                 </div>
               </div>
               <div className={styles.mapGhost}>
-                <span className="material-symbols-outlined" style={{ fontSize: '8rem', opacity: 0.05 }}>mosque</span>
+                <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '8rem', opacity: 0.05 }}>mosque</span>
               </div>
             </div>
 
@@ -54,7 +80,7 @@ export default function ContactPage() {
             <div className={styles.contactCards}>
               <div className={`${styles.contactCard} ${styles.contactCardEmail}`}>
                 <div className={styles.contactIcon}>
-                  <span className="material-symbols-outlined">mail</span>
+                  <span className="material-symbols-outlined" aria-hidden="true">mail</span>
                 </div>
                 <div>
                   <h4 className={styles.contactLabel}>Email Inquiry</h4>
@@ -63,7 +89,7 @@ export default function ContactPage() {
               </div>
               <div className={`${styles.contactCard} ${styles.contactCardCall}`}>
                 <div className={styles.contactIcon}>
-                  <span className="material-symbols-outlined">chat</span>
+                  <span className="material-symbols-outlined" aria-hidden="true">chat</span>
                 </div>
                 <div>
                   <h4 className={styles.contactLabel}>Phone &amp; WhatsApp</h4>
@@ -87,48 +113,49 @@ export default function ContactPage() {
           <div className={styles.rightCol}>
             <div className={styles.formCard}>
               <div className={styles.formGhost}>
-                <span className="material-symbols-outlined" style={{ fontSize: '10rem', opacity: 0.1 }}>edit_note</span>
+                <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '10rem', opacity: 0.1 }}>edit_note</span>
               </div>
               <h2 className={styles.formTitle}>Send a Message</h2>
               <p className={styles.formSub}>Have a specific question? Fill out the form below and we&apos;ll get back to you shortly.</p>
 
-              {submitted ? (
-                <div className={styles.successMsg}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '3rem', color: 'var(--secondary-fixed)' }}>check_circle</span>
-                  <h3>Message Sent!</h3>
-                  <p>Thank you for reaching out. We&apos;ll get back to you shortly, In Shaa Allah.</p>
-                </div>
-              ) : (
-                <form
-                  action="https://formsubmit.co/blairgowriemasjid@gmail.com"
-                  method="POST"
-                  className={styles.form}
-                  onSubmit={() => setSubmitted(true)}
-                >
-                  {/* FormSubmit config */}
-                  <input type="hidden" name="_subject" value="New Contact Form Submission - Blairgowrie Masjid Website" />
-                  <input type="hidden" name="_captcha" value="false" />
-                  <input type="hidden" name="_next" value={typeof window !== 'undefined' ? `${window.location.origin}/thank-you` : '/thank-you'} />
-                  <input type="text" name="_honey" style={{ display: 'none' }} />
+              <form
+                action="https://formsubmit.co/blairgowriemasjid@gmail.com"
+                method="POST"
+                className={styles.form}
+                onSubmit={onSubmit}
+              >
+                {/* FormSubmit config */}
+                <input type="hidden" name="_subject" value="New Contact Form Submission - Blairgowrie Masjid Website" />
+                <input type="hidden" name="_captcha" value="false" />
+                <input type="hidden" name="_next" value={nextUrl} />
+                {/* Honeypot: hidden from people and screen readers; bots fill it and FormSubmit drops the message */}
+                <input type="text" name="_honey" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" aria-hidden="true" />
 
-                  <div className={styles.formGroup}>
-                    <label>Full Name</label>
-                    <input type="text" name="name" placeholder="Enter your name" required id="contact-name" />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Email Address</label>
-                    <input type="email" name="email" placeholder="your@email.com" required id="contact-email" />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Message</label>
-                    <textarea name="message" placeholder="How can we help you?" rows="5" required id="contact-message" />
-                  </div>
-                  <button type="submit" className={styles.submitBtn} id="contact-submit">
-                    <span>Send Message</span>
-                    <span className="material-symbols-outlined">send</span>
-                  </button>
-                </form>
-              )}
+                <div className={styles.formGroup}>
+                  <label htmlFor="contact-name">Full Name</label>
+                  <input type="text" name="name" placeholder="Enter your name" required id="contact-name" autoComplete="name" />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="contact-email">Email Address</label>
+                  <input type="email" name="email" placeholder="your@email.com" required id="contact-email" autoComplete="email" />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="contact-message">Message</label>
+                  <textarea name="message" placeholder="How can we help you?" rows="5" required id="contact-message" />
+                </div>
+                <div className={styles.consent}>
+                  <input type="checkbox" name="consent" value="Agreed to the privacy policy" required id="contact-consent" />
+                  <label htmlFor="contact-consent">
+                    I agree that the Blairgowrie Muslim Association may use these details to reply to me, as set out in the{' '}
+                    <Link href="/privacy-policy">privacy policy</Link>.
+                  </label>
+                </div>
+                {error && <p className={styles.formError} role="alert">{error}</p>}
+                <button type="submit" className={styles.submitBtn} id="contact-submit" disabled={sending}>
+                  <span>{sending ? 'Sending…' : 'Send Message'}</span>
+                  <span className="material-symbols-outlined" aria-hidden="true">send</span>
+                </button>
+              </form>
             </div>
           </div>
         </div>

@@ -47,8 +47,8 @@
   --card-border: var(--dark-card-border);
 
   /* Fonts */
-  --font-display: 'Bebas Neue', sans-serif;
-  --font-mono: 'DM Mono', monospace;
+  --font-display: var(--font-bebas), 'Bebas Neue', sans-serif;
+  --font-mono: var(--font-dm-mono), 'DM Mono', monospace;
 
   /* Layout & Spacing (Fluid) */
   --hairline: 0.0625rem;
@@ -144,8 +144,21 @@ select {
   font-family: var(--font-mono);
 }
 
-/* ── Material Symbols ── */
+/* ── Material Symbols (self-hosted subset, see app/fonts) ── */
 .material-symbols-outlined {
+  font-family: var(--font-icons);
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   vertical-align: middle;
 }
@@ -340,4 +353,19 @@ p {
   syntax: '<integer>';
   initial-value: 0;
   inherits: false;
+}
+/* ── Reduced motion: every animation and transition lands on its final state ── */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './Footer.module.css';
+import { org, fullAddress } from '../content/site';
 
 export default function Footer() {
   const pathname = usePathname();
@@ -49,15 +50,15 @@ export default function Footer() {
           <h3 className={styles.colTitle}>CONTACT</h3>
           <ul className={styles.list}>
             <li className={styles.listItem}>
-              <span className="material-symbols-outlined" style={{fontSize:'1rem'}}>location_on</span>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{fontSize:'1rem'}}>location_on</span>
               70 Conrad Drive, Blairgowrie
             </li>
             <li className={styles.listItem}>
-              <span className="material-symbols-outlined" style={{fontSize:'1rem'}}>mail</span>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{fontSize:'1rem'}}>mail</span>
               <a href="mailto:blairgowriemasjid@gmail.com">blairgowriemasjid@gmail.com</a>
             </li>
             <li className={styles.listItem}>
-              <span className="material-symbols-outlined" style={{fontSize:'1rem'}}>phone</span>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{fontSize:'1rem'}}>phone</span>
               072 441 1651
             </li>
           </ul>
@@ -65,8 +66,14 @@ export default function Footer() {
       </div>
 
       <div className={styles.bottom}>
-        <p className={styles.copyright}>© {new Date().getFullYear()} Blairgowrie Muslim Association.
-          <Link href="/privacy-policy" style={{marginLeft:'1rem', color:'var(--muted)'}}>Privacy Policy</Link>
+        {/* ECTA s43 disclosure */}
+        <p className={styles.legal}>
+          {org.legalName} · {org.legalStatus} · Registration: {org.registration}
+          <br />
+          {fullAddress} · {org.phone} · <a href={`mailto:${org.email}`}>{org.email}</a>
+        </p>
+        <p className={styles.copyright}>© {new Date().getFullYear()} {org.legalName}.
+          <Link prefetch={false} href="/privacy-policy" className={styles.policyLink}>Privacy Policy</Link>
         </p>
       </div>
     </footer>

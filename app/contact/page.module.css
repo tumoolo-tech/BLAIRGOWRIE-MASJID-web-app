@@ -406,6 +406,33 @@
   padding-left: 1rem;
 }
 
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+.consent input {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.1rem;
+  accent-color: var(--accent);
+}
+
+.consent a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.formError {
+  color: var(--secondary);
+  font-size: 0.85rem;
+}
+
 .submitBtn {
   width: 100%;
   background: var(--accent);
@@ -478,6 +505,7 @@
   }
 
   .mainGrid {
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.25rem;
   }
 
@@ -486,7 +514,9 @@
   }
 
   .contactCards {
-    grid-template-columns: 1fr 1fr;
+    /* minmax(0, …): a bare 1fr can't shrink below the unbreakable email address,
+       which pushed the cards past the screen edge at 320px */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.6rem;
     align-items: stretch;
   }
@@ -591,6 +621,7 @@
 
   .contactValue {
     font-size: 0.7rem;
+    overflow-wrap: anywhere;
   }
 
   .phoneNumber {

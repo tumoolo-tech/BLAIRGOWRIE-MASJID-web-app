@@ -2,7 +2,8 @@
 import styles from './page.module.css';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { supabase } from './lib/supabase';
+import { selectRows } from './lib/publicData';
+import LazyIframe from './components/LazyIframe';
 
 export default function Home() {
   const [times, setTimes] = useState(null);
@@ -43,21 +44,21 @@ export default function Home() {
         const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
         const [annRes, evtRes] = await Promise.all([
-          supabase
-            .from('announcements')
-            .select('id, message, category, event_at, created_at')
-            .eq('is_active', true)
-            .lte('starts_at', nowIso)
-            .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
-            .order('created_at', { ascending: false })
-            .limit(3),
-          supabase
-            .from('events')
-            .select('id, title, description, event_date, event_time')
-            .eq('is_active', true)
-            .gte('event_date', todayStr)
-            .order('event_date', { ascending: true })
-            .limit(3),
+          selectRows('announcements', {
+            select: 'id,message,category,event_at,created_at',
+            is_active: 'eq.true',
+            starts_at: `lte.${nowIso}`,
+            or: `(expires_at.is.null,expires_at.gt.${nowIso})`,
+            order: 'created_at.desc',
+            limit: '3',
+          }),
+          selectRows('events', {
+            select: 'id,title,description,event_date,event_time',
+            is_active: 'eq.true',
+            event_date: `gte.${todayStr}`,
+            order: 'event_date.asc',
+            limit: '3',
+          }),
         ]);
 
         const items = [];
@@ -141,6 +142,9 @@ export default function Home() {
           <div className={styles.heroGradient} />
           <img
             src="/pictures/placeview2.webp"
+            srcSet="/pictures/placeview2-960.webp 960w, /pictures/placeview2.webp 1116w"
+            sizes="100vw"
+            fetchPriority="high"
             alt="Masjid Architecture"
             className={styles.heroImg}
           />
@@ -166,7 +170,7 @@ export default function Home() {
       <section className={styles.prayerStrip}>
         <div className={styles.prayerStripInner}>
           <div className={styles.prayerCurrent}>
-            <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '1.75rem' }}>schedule</span>
+            <span className="material-symbols-outlined" aria-hidden="true" style={{ color: 'var(--accent)', fontSize: '1.75rem' }}>schedule</span>
             <div>
               <p className={styles.prayerLabel}>Next Prayer</p>
               <h3 className={styles.prayerName}>{nextPrayer.name}</h3>
@@ -185,11 +189,10 @@ export default function Home() {
 
         {/* Phone-only: live Masjid Board iframe replacing the strip */}
         <div className={styles.prayerBoard}>
-          <iframe
+          <LazyIframe
             src="https://masjidboardlive.com/boards/?id=blairgowrie-ubay-bin-kab"
             title="Masjid Times — Live Board"
             className={styles.prayerBoardFrame}
-            loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />
           <a
@@ -212,6 +215,8 @@ export default function Home() {
               <div className={styles.missionGlow} />
               <img
                 src="/pictures/home.webp"
+                loading="lazy"
+                decoding="async"
                 alt="Community gathering"
                 className={styles.missionImg}
               />
@@ -245,7 +250,7 @@ export default function Home() {
               <p className={styles.newsSubtitle}>Stay connected with the latest happenings at our Masjid.</p>
             </div>
             <Link href="/events" className={styles.viewAll}>
-              View All Events <span className="material-symbols-outlined">arrow_forward</span>
+              View All Events <span className="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
             </Link>
           </div>
           <div className={styles.newsGrid}>
@@ -263,7 +268,7 @@ export default function Home() {
                   <h3 className={styles.newsCardTitle}>{item.title}</h3>
                   {item.desc && <p className={styles.newsCardDesc}>{item.desc}</p>}
                   <div className={styles.newsCardDate}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '0.875rem' }}>calendar_today</span>
+                    <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '0.875rem' }}>calendar_today</span>
                     {item.displayDate}
                   </div>
                 </div>
@@ -284,13 +289,13 @@ export default function Home() {
             <div className={styles.locationDetails}>
               <div className={styles.locationItem}>
                 <div className={styles.locationIcon}>
-                  <span className="material-symbols-outlined" style={{ color: 'var(--accent)' }}>location_on</span>
+                  <span className="material-symbols-outlined" aria-hidden="true" style={{ color: 'var(--accent)' }}>location_on</span>
                 </div>
                 <span>70 Conrad Dr, Blairgowrie, Randburg, 2195</span>
               </div>
               <div className={styles.locationItem}>
                 <div className={styles.locationIcon}>
-                  <span className="material-symbols-outlined" style={{ color: 'var(--accent)' }}>mail</span>
+                  <span className="material-symbols-outlined" aria-hidden="true" style={{ color: 'var(--accent)' }}>mail</span>
                 </div>
                 <span>blairgowriemasjid@gmail.com</span>
               </div>
@@ -301,18 +306,17 @@ export default function Home() {
               rel="noopener noreferrer"
               className={styles.directionsBtn}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>directions</span>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: '1rem' }}>directions</span>
               Get Directions
             </a>
           </div>
           <div className={styles.locationMap}>
-            <iframe
+            <LazyIframe
               src="https://maps.google.com/maps?q=Sayyidina+Ubay+bin+Ka'b+(RA)+-+Musalla+%26+Madressa,+70+Conrad+Dr,+Blairgowrie,+Randburg,+2195,+South+Africa&z=16&output=embed&hl=en"
               width="100%"
               height="100%"
               style={{ border: 0, display: 'block' }}
               allowFullScreen
-              loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               title="Sayyidina Ubay bin Ka'b (RA) - Musalla & Madressa Location"
             />
@@ -324,7 +328,7 @@ export default function Home() {
               aria-label="Click to get directions in Google Maps"
             >
               <div className={styles.mapOverlayBadge}>
-                <span className="material-symbols-outlined">near_me</span>
+                <span className="material-symbols-outlined" aria-hidden="true">near_me</span>
                 Open in Google Maps
               </div>
             </a>

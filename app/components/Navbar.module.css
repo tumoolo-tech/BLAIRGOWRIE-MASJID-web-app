@@ -196,12 +196,16 @@
   -webkit-backdrop-filter: blur(20px);
   z-index: 999;
   transform: translateX(100%);
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  /* hidden (not just off-screen) when closed, so its links leave the tab order */
+  visibility: hidden;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.35s;
   border-left: var(--hairline) solid var(--card-border);
 }
 
 .mobileMenu.mobileOpen {
   transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s;
 }
 
 .mobileMenuInner {
@@ -251,7 +255,9 @@
   margin-top: 0.5rem;
 }
 
-@media (min-width: 768px) {
+/* The inline links + DONATE need ~1150px; below that (tablets) they overlapped the
+   logo and pushed DONATE off-screen, so tablets use the menu like phones. */
+@media (min-width: 72rem) {
   .desktopLinks { display: flex; }
   .donateBtn { display: inline-flex; }
   .hamburger { display: none; }
