@@ -323,3 +323,32 @@ test('home prayer strip picks up a changed board time without a reload', async (
   await page.clock.runFor(5 * 60 * 1000);
   await expect(strip).toContainText('05:30 PM');
 });
+
+test('home strip shows the clock and when the next salah is', async ({ page }) => {
+  await page.route('**/api/prayer-times', (route) => route.fulfill({
+    json: { times: { fajr: '04:45', sunrise: '05:30', dhuhr: '13:00', asr: '17:15', maghrib: '18:19', isha: '20:00' } },
+  }));
+  const strip = page.locator('[class*=prayerStripInner]').first();
+  await page.clock.setFixedTime(new Date('2026-10-18T12:10:00'));
+  await page.goto('/');
+  await expect(strip).toContainText('Dhuhr');
+  await expect(strip).toContainText('Salah at 01:00 PM');
+  await expect(strip.locator('time')).toHaveText('12:10');
+  await page.clock.setFixedTime(new Date('2026-10-18T18:00:00'));
+  await page.reload();
+  await expect(strip).toContainText('Adhan at 06:19 PM'); // Maghrib uses the adhan time
+});
+
+test('home and salah times always agree on the next prayer', async ({ page }) => {
+  await page.route('**/api/prayer-times', (route) => route.fulfill({
+    json: { times: { fajr: '04:45', sunrise: '05:30', dhuhr: '13:00', asr: '17:15', maghrib: '18:19', isha: '20:00' } },
+  }));
+  // 12:10: Dhuhr adhan (12:45 on the board, 11:53 calculated) may have passed, but Dhuhr salah is at 13:00
+  await page.clock.setFixedTime(new Date('2026-10-18T12:10:00'));
+  await page.goto('/');
+  await expect(page.locator('[class*=prayerStripInner]').first()).toContainText('Dhuhr');
+  await expect(page.locator('[class*=prayerStripInner]').first()).toContainText('Salah at 01:00 PM');
+  await page.goto('/salah-times');
+  await expect(page.locator('[class*=activeName]')).toHaveText('Dhuhr');
+  await expect(page.locator('[class*=activeIqamah]')).toHaveText('Salah will be at 01:00 PM');
+});

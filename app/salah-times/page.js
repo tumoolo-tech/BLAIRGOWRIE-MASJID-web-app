@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import styles from './page.module.css';
 import { selectRows } from '../lib/publicData';
 import LazyIframe from '../components/LazyIframe';
+import LiveClock from '../components/LiveClock';
+import { useBoardTimes, useNow, getNextPrayer, timeKind, to12h as boardTo12h } from '../lib/prayerTimes';
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -61,6 +63,10 @@ function ChangeCell({ change, styles }) {
 // ── Page ─────────────────────────────────────────────────────────
 
 export default function SalahTimesPage() {
+  // The visible card uses the board's times, shared with the home page so they always agree.
+  const boardTimes = useBoardTimes();
+  const boardNow = useNow();
+  const boardNext = getNextPrayer(boardTimes, boardNow);
   const [times, setTimes] = useState(null);
   // null until mounted: the page is prerendered at build time, so rendering a clock
   // during SSR would never match the visitor's time (React hydration error #418).
@@ -197,9 +203,6 @@ export default function SalahTimesPage() {
   const jumuahAdhan = to12h(jumuahOv?.new_adhan_time ? timeDbTo24(jumuahOv.new_adhan_time) : jumuahDefaultAdhan24);
   const jumuahIqamah = to12h(jumuahOv?.new_iqamah_time ? timeDbTo24(jumuahOv.new_iqamah_time) : jumuahDefaultIqamah24);
 
-  const currentTimeStr = currentTime
-    ? currentTime.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: false })
-    : '--:--';
 
   return (
     <div className={styles.page}>
@@ -219,13 +222,13 @@ export default function SalahTimesPage() {
           </div>
           <div className={styles.activeTop}>
             <p className={styles.activeLabel}>Next Prayer</p>
-            <h2 className={styles.activeName}>{nextPrayer.name}</h2>
+            <h2 className={styles.activeName}>{boardNext ? boardNext.name : 'Loading...'}</h2>
           </div>
           <div className={styles.activeBottom}>
-            <div className={styles.activeTime}>{currentTimeStr}</div>
+            <LiveClock className={styles.activeTime} />
             <p className={styles.activeIqamah}>
-              {nextPrayer.name !== 'Loading...' && times
-                ? `Iqamah will be at ${prayerRows.find(p => p.name === nextPrayer.name)?.iqamah || ''}`
+              {boardNext
+                ? `${timeKind(boardNext.key)} will be at ${boardTo12h(boardNext.time)}`
                 : 'Loading times...'}
             </p>
           </div>
@@ -307,7 +310,7 @@ export default function SalahTimesPage() {
               <span className="material-symbols-outlined" aria-hidden="true" style={{ color: 'var(--secondary)' }}>info</span>
               <div>
                 <h4 className={styles.noticeTitle}>Weekly Changes</h4>
-                <p className={styles.noticeText}>Prayer times are updated automatically using the Aladhan API based on the sun&apos;s position for Blairgowrie, Randburg.</p>
+                <p className={styles.noticeText}>Times come straight from the masjid&apos;s live board, so any change the committee makes shows here and on the home page automatically.</p>
               </div>
             </div>
           </div>

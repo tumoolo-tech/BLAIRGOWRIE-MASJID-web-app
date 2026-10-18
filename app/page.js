@@ -4,41 +4,15 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { selectRows } from './lib/publicData';
 import LazyIframe from './components/LazyIframe';
+import LiveClock from './components/LiveClock';
+import { useBoardTimes, useNow, getNextPrayer, timeKind, to12h } from './lib/prayerTimes';
 
 export default function Home() {
-  const [times, setTimes] = useState(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [nextPrayer, setNextPrayer] = useState({ name: 'Loading...', time: '' });
+  // Board times + next prayer: shared with /salah-times so the two pages always agree.
+  const times = useBoardTimes();
+  const now = useNow();
+  const next = getNextPrayer(times, now);
   const [news, setNews] = useState([]);
-
-  useEffect(() => {
-    // Same congregation times as the board on /salah-times (Maghrib = adhan), via our API route.
-    async function fetchTimes() {
-      try {
-        const res = await fetch('/api/prayer-times');
-        const { times: t } = await res.json();
-        if (t) {
-          setTimes({ Fajr: t.fajr, Sunrise: t.sunrise, Dhuhr: t.dhuhr, Asr: t.asr, Maghrib: t.maghrib, Isha: t.isha });
-        }
-      } catch (err) {
-        console.error('Failed to fetch prayer times:', err);
-      }
-    }
-    fetchTimes();
-
-    // Keep a long-open tab current: the board can change times (e.g. a new Asr time from a
-    // given date), so re-read every 5 minutes and whenever the visitor returns to the tab.
-    const refresh = setInterval(fetchTimes, 5 * 60 * 1000);
-    const onVisible = () => { if (document.visibilityState === 'visible') fetchTimes(); };
-    document.addEventListener('visibilitychange', onVisible);
-
-    const timer = setInterval(() => setCurrentTime(new Date()), 30000);
-    return () => {
-      clearInterval(timer);
-      clearInterval(refresh);
-      document.removeEventListener('visibilitychange', onVisible);
-    };
-  }, []);
 
   // Load real announcements + events for the News section
   useEffect(() => {
@@ -98,46 +72,14 @@ export default function Home() {
     loadNews();
   }, []);
 
-  useEffect(() => {
-    if (!times) return;
-    const prayers = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-    const now = currentTime;
-    for (const p of prayers) {
-      if (p === 'Sunrise' || !times[p]) continue; // next prayer is one of the five obligatory prayers
-      const [h, m] = times[p].split(':').map(Number);
-      const prayerDate = new Date(now);
-      prayerDate.setHours(h, m, 0);
-      if (prayerDate > now) {
-        setNextPrayer({ name: p, time: formatTime(times[p]) });
-        return;
-      }
-    }
-    setNextPrayer({ name: 'Fajr', time: formatTime(times.Fajr) });
-  }, [times, currentTime]);
-
-  function formatTime(t) {
-    if (!t) return '—';
-    const [h, m] = t.split(':').map(Number);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
-    return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
-  }
-
-  const displayPrayers = times ? [
-    { name: 'Fajr', time: formatTime(times.Fajr) },
-    { name: 'Sunrise', time: formatTime(times.Sunrise) },
-    { name: 'Dhuhr', time: formatTime(times.Dhuhr) },
-    { name: 'Asr', time: formatTime(times.Asr) },
-    { name: 'Maghrib', time: formatTime(times.Maghrib) },
-    { name: 'Isha', time: formatTime(times.Isha) },
-  ] : [
-    { name: 'Fajr', time: '...' },
-    { name: 'Sunrise', time: '...' },
-    { name: 'Dhuhr', time: '...' },
-    { name: 'Asr', time: '...' },
-    { name: 'Maghrib', time: '...' },
-    { name: 'Isha', time: '...' },
-  ];
+  const displayPrayers = [
+    { name: 'Fajr', key: 'fajr' },
+    { name: 'Sunrise', key: 'sunrise' },
+    { name: 'Dhuhr', key: 'dhuhr' },
+    { name: 'Asr', key: 'asr' },
+    { name: 'Maghrib', key: 'maghrib' },
+    { name: 'Isha', key: 'isha' },
+  ].map((p) => ({ name: p.name, time: times ? to12h(times[p.key]) : '...' }));
 
   return (
     <div className={styles.page}>
@@ -178,8 +120,12 @@ export default function Home() {
             <span className="material-symbols-outlined" aria-hidden="true" style={{ color: 'var(--accent)', fontSize: '1.75rem' }}>schedule</span>
             <div>
               <p className={styles.prayerLabel}>Next Prayer</p>
-              <h3 className={styles.prayerName}>{nextPrayer.name}</h3>
+              <h3 className={styles.prayerName}>{next ? next.name : 'Loading...'}</h3>
+              {next && (
+                <p className={styles.prayerAt}>{timeKind(next.key)} at {to12h(next.time)}</p>
+              )}
             </div>
+            <LiveClock className={styles.prayerClock} />
           </div>
           <div className={styles.prayerTimes}>
             {displayPrayers.map(p => (
