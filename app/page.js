@@ -12,18 +12,13 @@ export default function Home() {
   const [news, setNews] = useState([]);
 
   useEffect(() => {
+    // Same congregation times as the board on /salah-times (Maghrib = adhan), via our API route.
     async function fetchTimes() {
       try {
-        const today = new Date();
-        const dd = String(today.getDate()).padStart(2, '0');
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const yyyy = today.getFullYear();
-        const res = await fetch(
-          `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}?latitude=-26.1076&longitude=28.0075&method=2`
-        );
-        const data = await res.json();
-        if (data.code === 200) {
-          setTimes(data.data.timings);
+        const res = await fetch('/api/prayer-times');
+        const { times: t } = await res.json();
+        if (t) {
+          setTimes({ Fajr: t.fajr, Sunrise: t.sunrise, Dhuhr: t.dhuhr, Asr: t.asr, Maghrib: t.maghrib, Isha: t.isha });
         }
       } catch (err) {
         console.error('Failed to fetch prayer times:', err);
@@ -98,7 +93,7 @@ export default function Home() {
     const prayers = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
     const now = currentTime;
     for (const p of prayers) {
-      if (p === 'Sunrise') continue; // We usually calculate next prayer based on obligatory prayers
+      if (p === 'Sunrise' || !times[p]) continue; // next prayer is one of the five obligatory prayers
       const [h, m] = times[p].split(':').map(Number);
       const prayerDate = new Date(now);
       prayerDate.setHours(h, m, 0);
@@ -111,7 +106,7 @@ export default function Home() {
   }, [times, currentTime]);
 
   function formatTime(t) {
-    if (!t) return '';
+    if (!t) return '—';
     const [h, m] = t.split(':').map(Number);
     const ampm = h >= 12 ? 'PM' : 'AM';
     const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;

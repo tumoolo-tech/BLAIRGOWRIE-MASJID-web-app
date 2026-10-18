@@ -291,3 +291,21 @@ test.describe('reduced motion', () => {
     expect(frames).toBeLessThan(5);
   });
 });
+
+test('home prayer strip shows the board salah times (Maghrib = adhan)', async ({ page }) => {
+  await page.route('**/api/prayer-times', (route) => route.fulfill({
+    json: { times: { fajr: '04:45', sunrise: '05:30', dhuhr: '13:00', asr: '17:15', maghrib: '18:19', isha: '20:00' } },
+  }));
+  await page.goto('/');
+  const strip = page.locator('[class*=prayerTimes]').first();
+  for (const t of ['04:45 AM', '05:30 AM', '01:00 PM', '05:15 PM', '06:19 PM', '08:00 PM']) {
+    await expect(strip).toContainText(t);
+  }
+});
+
+test('prayer-times API returns the board times', async ({ request }) => {
+  const res = await request.get('/api/prayer-times');
+  expect(res.status()).toBe(200);
+  const { times } = await res.json();
+  for (const k of ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha']) expect(times[k], k).toMatch(/^\d{1,2}:\d{2}$/);
+});

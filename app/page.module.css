@@ -87,10 +87,12 @@
   border-radius: 2rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  margin: 0 auto 2.25rem;
-  text-align: center;
+  /* left edge shared with the title, subtitle and buttons (it used to centre itself
+     in the 48rem column and float on its own) */
+  margin: 0 0 2rem;
+  text-align: left;
   width: fit-content;
-  align-self: center;
+  align-self: flex-start;
   box-shadow: 0 6px 20px rgba(255, 213, 74, 0.35);
   text-shadow: none;
 }
