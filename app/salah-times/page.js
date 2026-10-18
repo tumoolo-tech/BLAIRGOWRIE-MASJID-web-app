@@ -233,12 +233,14 @@ export default function SalahTimesPage() {
 
         {/* Times Table — phone shows external Masjid Board, PC shows the local table */}
         <div className={styles.externalBoard}>
-          <LazyIframe
-            src="https://masjidboardlive.com/boards/?id=blairgowrie-ubay-bin-kab"
-            title="Masjid Times — Live Board"
-            className={styles.externalBoardFrame}
-            referrerPolicy="no-referrer-when-downgrade"
-          />
+          <div className={styles.externalBoardViewport}>
+            <LazyIframe
+              src="https://masjidboardlive.com/boards/?id=blairgowrie-ubay-bin-kab"
+              title="Masjid Times — Live Board"
+              className={styles.externalBoardFrame}
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
           <a
             href="https://masjidboardlive.com/boards/?id=blairgowrie-ubay-bin-kab"
             target="_blank"

@@ -121,10 +121,23 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
+/* The board is another site, so it can't be restyled: to show more of it (down to
+   "Next Salah Change") the iframe is rendered larger and scaled down. --board-zoom
+   is the scale, --board-height the visible height of the card. */
+.externalBoardViewport {
+    --board-zoom: 1;
+    --board-height: 36rem;
+    height: var(--board-height);
+    overflow: hidden;
+}
+
 .externalBoardFrame {
     display: block;
-    width: 100%;
-    height: 36rem;
+    width: calc(100% / var(--board-zoom));
+    max-width: none; /* globals.css caps iframes at 100%, which would undo the zoom */
+    height: calc(var(--board-height) / var(--board-zoom));
+    transform: scale(var(--board-zoom));
+    transform-origin: 0 0;
     border: 0;
     background: var(--card-bg);
 }
@@ -352,6 +365,11 @@
         grid-template-columns: 4fr 8fr;
     }
 
+    .externalBoardViewport {
+        --board-zoom: 0.5;
+        --board-height: 46rem;
+    }
+
     .infoGrid {
         grid-template-columns: 1fr 1fr;
     }
@@ -441,9 +459,8 @@
         letter-spacing: 0.2em;
     }
 
-    .externalBoardFrame {
-        height: 70vh;
-        min-height: 26rem;
+    .externalBoardViewport {
+        --board-height: max(70vh, 26rem);
     }
 
     .externalBoardLink {
