@@ -26,8 +26,18 @@ export default function Home() {
     }
     fetchTimes();
 
+    // Keep a long-open tab current: the board can change times (e.g. a new Asr time from a
+    // given date), so re-read every 5 minutes and whenever the visitor returns to the tab.
+    const refresh = setInterval(fetchTimes, 5 * 60 * 1000);
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchTimes(); };
+    document.addEventListener('visibilitychange', onVisible);
+
     const timer = setInterval(() => setCurrentTime(new Date()), 30000);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      clearInterval(refresh);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, []);
 
   // Load real announcements + events for the News section

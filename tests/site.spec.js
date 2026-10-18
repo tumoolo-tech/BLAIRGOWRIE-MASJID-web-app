@@ -309,3 +309,17 @@ test('prayer-times API returns the board times', async ({ request }) => {
   const { times } = await res.json();
   for (const k of ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha']) expect(times[k], k).toMatch(/^\d{1,2}:\d{2}$/);
 });
+
+test('home prayer strip picks up a changed board time without a reload', async ({ page }) => {
+  let asr = '17:15';
+  await page.route('**/api/prayer-times', (route) => route.fulfill({
+    json: { times: { fajr: '04:45', sunrise: '05:30', dhuhr: '13:00', asr, maghrib: '18:19', isha: '20:00' } },
+  }));
+  await page.clock.install();
+  await page.goto('/');
+  const strip = page.locator('[class*=prayerTimes]').first();
+  await expect(strip).toContainText('05:15 PM');
+  asr = '17:30'; // the board's Asr time changes
+  await page.clock.runFor(5 * 60 * 1000);
+  await expect(strip).toContainText('05:30 PM');
+});
