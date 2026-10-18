@@ -80,3 +80,25 @@ export function useNow(intervalMs = 30000) {
   }, [intervalMs]);
   return now;
 }
+
+// Minutes from now until the next prayer (rolls into tomorrow for Fajr after Isha).
+export function minutesUntil(next, now) {
+  if (!next || !now) return null;
+  const [h, m] = next.time.split(':').map(Number);
+  const at = new Date(now);
+  at.setHours(h, m, 0, 0);
+  if (at <= now) at.setDate(at.getDate() + 1);
+  return Math.ceil((at - now) / 60000);
+}
+
+// "in 2 h 15 min", "in 36 min", "now" — how people actually think about the next salah.
+export function formatCountdown(mins) {
+  if (mins == null) return '';
+  if (mins <= 0) return 'now';
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h ? `in ${h} h${m ? ` ${m} min` : ''}` : `in ${m} min`;
+}
+
+// Big-display form without the leading zero: "5:15 PM".
+export const to12hShort = (t) => to12h(t).replace(/^0/, '');

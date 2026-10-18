@@ -331,12 +331,14 @@ test('home strip shows the clock and when the next salah is', async ({ page }) =
   const strip = page.locator('[class*=prayerStripInner]').first();
   await page.clock.setFixedTime(new Date('2026-10-18T12:10:00'));
   await page.goto('/');
-  await expect(strip).toContainText('Dhuhr');
-  await expect(strip).toContainText('Salah at 01:00 PM');
-  await expect(strip.locator('time')).toHaveText('12:10');
+  await expect(strip.locator('h3')).toHaveText(/Dhuhr\s*1:00 PM/); // big: the prayer and its time
+  await expect(strip).toContainText('Salah in 50 min');
+  await expect(strip).toContainText('Now 12:10'); // current time is labelled, never bare
+  await expect(strip.locator('[aria-current="time"]')).toContainText('Dhuhr'); // highlighted in the row
   await page.clock.setFixedTime(new Date('2026-10-18T18:00:00'));
   await page.reload();
-  await expect(strip).toContainText('Adhan at 06:19 PM'); // Maghrib uses the adhan time
+  await expect(strip.locator('h3')).toHaveText(/Maghrib\s*6:19 PM/);
+  await expect(strip).toContainText('Adhan in 19 min'); // Maghrib uses the adhan time
 });
 
 test('home and salah times always agree on the next prayer', async ({ page }) => {
@@ -346,9 +348,9 @@ test('home and salah times always agree on the next prayer', async ({ page }) =>
   // 12:10: Dhuhr adhan (12:45 on the board, 11:53 calculated) may have passed, but Dhuhr salah is at 13:00
   await page.clock.setFixedTime(new Date('2026-10-18T12:10:00'));
   await page.goto('/');
-  await expect(page.locator('[class*=prayerStripInner]').first()).toContainText('Dhuhr');
-  await expect(page.locator('[class*=prayerStripInner]').first()).toContainText('Salah at 01:00 PM');
+  await expect(page.locator('[class*=prayerStripInner] h3').first()).toHaveText(/Dhuhr\s*1:00 PM/);
   await page.goto('/salah-times');
   await expect(page.locator('[class*=activeName]')).toHaveText('Dhuhr');
-  await expect(page.locator('[class*=activeIqamah]')).toHaveText('Salah will be at 01:00 PM');
+  await expect(page.locator('[class*=activeTime]')).toHaveText('1:00 PM');
+  await expect(page.locator('[class*=activeIqamah]')).toContainText('in 50 min');
 });

@@ -4,7 +4,7 @@ import styles from './page.module.css';
 import { selectRows } from '../lib/publicData';
 import LazyIframe from '../components/LazyIframe';
 import LiveClock from '../components/LiveClock';
-import { useBoardTimes, useNow, getNextPrayer, timeKind, to12h as boardTo12h } from '../lib/prayerTimes';
+import { useBoardTimes, useNow, getNextPrayer, timeKind, to12hShort, minutesUntil, formatCountdown } from '../lib/prayerTimes';
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -224,12 +224,14 @@ export default function SalahTimesPage() {
             <p className={styles.activeLabel}>Next Prayer</p>
             <h2 className={styles.activeName}>{boardNext ? boardNext.name : 'Loading...'}</h2>
           </div>
+          {/* Big = the prayer's time; the current time is small and labelled "Now" (same
+              hierarchy as the home page strip). */}
           <div className={styles.activeBottom}>
-            <LiveClock className={styles.activeTime} />
+            <p className={styles.activeKind}>{boardNext ? `${timeKind(boardNext.key)} at` : 'Loading times...'}</p>
+            <div className={styles.activeTime}>{boardNext ? to12hShort(boardNext.time) : '--:--'}</div>
             <p className={styles.activeIqamah}>
-              {boardNext
-                ? `${timeKind(boardNext.key)} will be at ${boardTo12h(boardNext.time)}`
-                : 'Loading times...'}
+              {boardNext && <span>{formatCountdown(minutesUntil(boardNext, boardNow))}</span>}
+              <span className={styles.activeNow}>Now <LiveClock /></span>
             </p>
           </div>
         </div>

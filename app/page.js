@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { selectRows } from './lib/publicData';
 import LazyIframe from './components/LazyIframe';
 import LiveClock from './components/LiveClock';
-import { useBoardTimes, useNow, getNextPrayer, timeKind, to12h } from './lib/prayerTimes';
+import { useBoardTimes, useNow, getNextPrayer, timeKind, to12h, to12hShort, minutesUntil, formatCountdown } from './lib/prayerTimes';
 
 export default function Home() {
   // Board times + next prayer: shared with /salah-times so the two pages always agree.
@@ -79,7 +79,7 @@ export default function Home() {
     { name: 'Asr', key: 'asr' },
     { name: 'Maghrib', key: 'maghrib' },
     { name: 'Isha', key: 'isha' },
-  ].map((p) => ({ name: p.name, time: times ? to12h(times[p.key]) : '...' }));
+  ].map((p) => ({ ...p, time: times ? to12h(times[p.key]) : '...' }));
 
   return (
     <div className={styles.page}>
@@ -118,18 +118,29 @@ export default function Home() {
         <div className={styles.prayerStripInner}>
           <div className={styles.prayerCurrent}>
             <span className="material-symbols-outlined" aria-hidden="true" style={{ color: 'var(--accent)', fontSize: '1.75rem' }}>schedule</span>
+            {/* Size follows what people look for: the prayer and its time are big, the
+                countdown is secondary, and the current time is small and labelled "Now" so
+                it can't be read as a prayer time. */}
             <div>
               <p className={styles.prayerLabel}>Next Prayer</p>
-              <h3 className={styles.prayerName}>{next ? next.name : 'Loading...'}</h3>
-              {next && (
-                <p className={styles.prayerAt}>{timeKind(next.key)} at {to12h(next.time)}</p>
-              )}
+              <h3 className={styles.prayerHeadline}>
+                <span className={styles.prayerName}>{next ? next.name : 'Loading...'}</span>
+                {next && <span className={styles.prayerNextTime}>{to12hShort(next.time)}</span>}
+              </h3>
+              <p className={styles.prayerAt}>
+                {next && (
+                  <span className={styles.prayerCountdown}>
+                    {timeKind(next.key)} {formatCountdown(minutesUntil(next, now))}
+                  </span>
+                )}
+                <span className={styles.prayerNow}>Now <LiveClock /></span>
+              </p>
             </div>
-            <LiveClock className={styles.prayerClock} />
           </div>
           <div className={styles.prayerTimes}>
             {displayPrayers.map(p => (
-              <div key={p.name} className={styles.prayerTimeItem}>
+              <div key={p.name} className={`${styles.prayerTimeItem} ${next?.key === p.key ? styles.prayerTimeNext : ''}`}
+                aria-current={next?.key === p.key ? 'time' : undefined}>
                 <p className={styles.prayerTimeLabel}>{p.name}</p>
                 <p className={styles.prayerTimeValue}>{p.time}</p>
               </div>
